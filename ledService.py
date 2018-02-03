@@ -106,7 +106,5 @@ def ledRequest():
 
 if __name__ == "__main__":
         # Configure multiprocessing
-        manager = multiprocessing.Manager()
-        in_queue = manager.Queue()
-        pool = multiprocessing.Pool()
+        in_queue = mp.Queue()
         app.run(host='0.0.0.0', port=80, debug=True)
