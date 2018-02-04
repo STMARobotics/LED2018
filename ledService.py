@@ -8,6 +8,7 @@ import signal
 import sys
 
 POISON_PILL = "STOP"
+firstRun = True
 
 app = Flask(__name__)
 
@@ -32,6 +33,9 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 
+def temporaryWorker():
+	return None
+
 # Define functions which animate LEDs in various ways.
 # attempting to allow multiprocess via this post : https://stackoverflow.com/questions/29571671/basic-multiprocessing-with-while-loop
 def colorWipe(strip, color):
@@ -54,10 +58,12 @@ def theaterChase(strip, color, wait_ms=50):
                                 ick = in_queue.get()
                                 if ick == POISON_PILL:
                                 #time to exit this function
-                                break  
+                        	        break  
+					print "eating poison pill"
                         for i in range(0, strip.numPixels(), 3):
                                 strip.setPixelColor(i+q, color)
                         strip.show()
+			print "showing colors"
                         time.sleep(wait_ms/1000.0)
                         for i in range(0, strip.numPixels(), 3):
                                 strip.setPixelColor(i+q, 0)
@@ -66,6 +72,7 @@ def theaterChase(strip, color, wait_ms=50):
 @app.route('/led', methods=['GET', 'POST'])
 @app.route('/echo', methods = ['GET', 'POST'])
 def ledRequest():
+	global firstRun
         if request.method == 'GET':
                 return "OK\nMethod: GET\n"
 
@@ -74,22 +81,28 @@ def ledRequest():
                 red = int(content['red'])
                 green = int(content['green'])
                 blue = int(content['blue'])
-                # is there a worker subprocess out there?
-                if worker.is_alive():
-                        # seems we have one
-                        in_queue.put(POISON_PILL)
-                        while worker.is_alive():
-                                # wait for it to take POISON_PILL
-                                time.sleep(0.1)
-                        if not worker.is_alive():
-                                # if worker is dead
-                                worker.join(timeout=1.0)
+
+		#just a placeholder to cover the first iteration
+	
+		#dont check for workers on first time through - variable not defined
+		if (firstRun == False):	
+                	# is there a worker subprocess out there?
+	                if worker.is_alive():
+	                        # seems we have one
+	                        in_queue.put(POISON_PILL)
+	                        while worker.is_alive():
+	                                # wait for it to take POISON_PILL
+	                                time.sleep(0.1)
+	                if not worker.is_alive():
+	                        # if worker is dead
+	                        worker.join(timeout=1.0)
                 if content['ledFunction'] == "colorWipe":
                         # Create NeoPixel object with appropriate configuration.
                         strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
                         strip.begin()
-                        # this only runs once, so not started as parallel process
-                        colorWipe(strip, Color(red, green, blue))  # wipe strip with color
+                        # this is run as a parallel process as it will continuously upate
+                        worker = mp.Process(colorWipe(strip, Color(red, green, blue)))  # wipe strip with color
+                        worker.start()
                         print "here in colorwipe"
                 elif content['ledFunction'] == "theaterChase":
                         # Create NeoPixel object with appropriate configuration.
@@ -103,6 +116,7 @@ def ledRequest():
         #print content['ledFunction']
         #print content['ledSection']
         return "OK\nMethod: POST\n"
+	firstRun = False
 
 if __name__ == "__main__":
         # Configure multiprocessing
