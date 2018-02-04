@@ -9,6 +9,7 @@ import sys
 
 POISON_PILL = "STOP"
 firstRun = True
+worker = True
 
 app = Flask(__name__)
 
@@ -56,14 +57,12 @@ def theaterChase(strip, color, wait_ms=50):
                         # Check queue for POISON_PILL
                         if ( in_queue.qsize() > 0):
                                 ick = in_queue.get()
-                                if ick == POISON_PILL:
-                                #time to exit this function
-                        	        break  
-					print "eating poison pill"
+                                if ick == "STOP":
+	                                #time to exit this function
+					return None
                         for i in range(0, strip.numPixels(), 3):
                                 strip.setPixelColor(i+q, color)
                         strip.show()
-			print "showing colors"
                         time.sleep(wait_ms/1000.0)
                         for i in range(0, strip.numPixels(), 3):
                                 strip.setPixelColor(i+q, 0)
@@ -73,6 +72,7 @@ def theaterChase(strip, color, wait_ms=50):
 @app.route('/echo', methods = ['GET', 'POST'])
 def ledRequest():
 	global firstRun
+	global worker
         if request.method == 'GET':
                 return "OK\nMethod: GET\n"
 
@@ -82,13 +82,12 @@ def ledRequest():
                 green = int(content['green'])
                 blue = int(content['blue'])
 
-		#just a placeholder to cover the first iteration
-	
 		#dont check for workers on first time through - variable not defined
 		if (firstRun == False):	
                 	# is there a worker subprocess out there?
 	                if worker.is_alive():
 	                        # seems we have one
+				print "poisoning"
 	                        in_queue.put(POISON_PILL)
 	                        while worker.is_alive():
 	                                # wait for it to take POISON_PILL
@@ -96,27 +95,25 @@ def ledRequest():
 	                if not worker.is_alive():
 	                        # if worker is dead
 	                        worker.join(timeout=1.0)
+
                 if content['ledFunction'] == "colorWipe":
                         # Create NeoPixel object with appropriate configuration.
                         strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
                         strip.begin()
                         # this is run as a parallel process as it will continuously upate
-                        worker = mp.Process(colorWipe(strip, Color(red, green, blue)))  # wipe strip with color
+                        worker = mp.Process(target=colorWipe, args=(strip, Color(red, green, blue)))  # chase strip with color
                         worker.start()
-                        print "here in colorwipe"
+                        # print "here in colorwipe"
                 elif content['ledFunction'] == "theaterChase":
                         # Create NeoPixel object with appropriate configuration.
                         strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
                         strip.begin()
                         # this is run as a parallel process as it will continuously upate
-                        worker = mp.Process(theaterChase(strip, Color(red, green, blue)))  # chase strip with color
+                        worker = mp.Process(target=theaterChase, args=(strip, Color(red, green, blue)))  # chase strip with color
                         worker.start()
-                        print "here in theaterchase"
-
-        #print content['ledFunction']
-        #print content['ledSection']
-        return "OK\nMethod: POST\n"
+                        # print "here in theaterchase"
 	firstRun = False
+        return "OK\nMethod: POST\n"
 
 if __name__ == "__main__":
         # Configure multiprocessing
