@@ -41,10 +41,9 @@ def temporaryWorker():
 # attempting to allow multiprocess via this post : https://stackoverflow.com/questions/29571671/basic-multiprocessing-with-while-loop
 def colorWipe(strip, color):
 	# Change color of the pixel strip
-        # Check queue for POISON_PILL, just to delete it
-        if ( in_queue.qsize() > 0):
-                #lets throw that POISON_PILL away
-                ick = in_queue.get()
+        # Check for POISON_PILL and exit if there is one
+        if poisonPill():
+                return None
 	for i in range(strip.numPixels()):
 		strip.setPixelColor(i, color)
 	strip.show()
@@ -54,12 +53,9 @@ def theaterChase(strip, color, wait_ms=50):
         # Movie theater light style chaser animation
         while True:
                 for q in range(3):
-                        # Check queue for POISON_PILL
-                        if ( in_queue.qsize() > 0):
-                                ick = in_queue.get()
-                                if ick == "STOP":
-	                                #time to exit this function
-					return None
+                        # Check for POISON_PILL and exit if there is one
+                        if poisonPill():
+                                return None
                         for i in range(0, strip.numPixels(), 3):
                                 strip.setPixelColor(i+q, color)
                         strip.show()
@@ -67,6 +63,16 @@ def theaterChase(strip, color, wait_ms=50):
                         for i in range(0, strip.numPixels(), 3):
                                 strip.setPixelColor(i+q, 0)
         return None 
+
+def poisonPill():
+        # Check queue for POISON_PILL
+        if ( in_queue.qsize() > 0):
+                ick = in_queue.get()
+                if ick == "STOP":
+	                # time to die
+			return True
+                else:
+                        return False
 
 @app.route('/led', methods=['GET', 'POST'])
 @app.route('/echo', methods = ['GET', 'POST'])
