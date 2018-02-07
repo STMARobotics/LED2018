@@ -33,6 +33,10 @@ LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
+LED_Ring_Low   = 0
+LED_Ring_High  = 23
+LED_Strip_Low  = 24
+LED_Strip_High = 37     # This should match the LED_COUNT variable
 
 def temporaryWorker():
 	return None
@@ -87,13 +91,15 @@ def ledRequest():
                 red = int(content['red'])
                 green = int(content['green'])
                 blue = int(content['blue'])
+                section = content['section']
+                if section == "all":
+                        
 
 		#dont check for workers on first time through - variable not defined
 		if (firstRun == False):	
                 	# is there a worker subprocess out there?
 	                if worker.is_alive():
 	                        # seems we have one
-				print "poisoning"
 	                        in_queue.put(POISON_PILL)
 	                        while worker.is_alive():
 	                                # wait for it to take POISON_PILL
