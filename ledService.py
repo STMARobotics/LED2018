@@ -38,9 +38,6 @@ LED_Ring_High  = 23
 LED_Strip_Low  = 24
 LED_Strip_High = 37     # This should match the LED_COUNT variable
 
-def temporaryWorker():
-	return None
-
 # Define functions which animate LEDs in various ways.
 # attempting to allow multiprocess via this post : https://stackoverflow.com/questions/29571671/basic-multiprocessing-with-while-loop
 def colorWipe(strip, color):
@@ -48,9 +45,9 @@ def colorWipe(strip, color):
         # Check for POISON_PILL and exit if there is one
         if poisonPill():
                 return None
-	for i in range(strip.numPixels()):
-		strip.setPixelColor(i, color)
-	strip.show()
+        for i in range(strip.numPixels()):
+                strip.setPixelColor(i, color)
+        strip.show()
         return None
 
 def theaterChase(strip, color, wait_ms=50):
@@ -74,12 +71,28 @@ def poisonPill():
                 ick = in_queue.get()
                 if ick == "STOP":
 	                # time to die
-			return True
+                        return True
                 else:
                         return False
 
-@app.route('/led', methods=['GET', 'POST'])
-@app.route('/echo', methods = ['GET', 'POST'])
+@app.route('/', methods=['GET'])
+def helloThere():
+        print("Please use the following JSON code to interact with this service.\n")
+        print("Post the data to the following url::  http://<hostname>/led\n\n")
+        print("curl -H \"Content-Type: application/json\" \\ \n")
+        print("    -X POST -d '{ \\ \n")
+        print("    \"red\":\"0-255\", \\ \n")
+        print("    \"green\":\"0-255\", \\ \n")
+        print("    \"blue\":\"0-255\", \\ \n")
+        print("    \"ledFunction\":\"<function>\", \\ \n")
+        print("    \"section\":\"<section>\" \\ \n")
+        print("    }' \\ \n")
+        print("    http://localhost/led\ \n\n")
+        print("Functions available : colorwipe|theaterChase\n")
+        print("Sections available  : ring|strip|all\n")
+        return "OK\nMethod: POST\n"
+
+@app.route('/led', methods = ['GET', 'POST'])
 def ledRequest():
 	global firstRun
 	global worker
@@ -93,7 +106,6 @@ def ledRequest():
                 blue = int(content['blue'])
                 section = content['section']
                 if section == "all":
-                        
 
 		#dont check for workers on first time through - variable not defined
 		if (firstRun == False):	
