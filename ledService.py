@@ -75,31 +75,28 @@ def poisonPill():
                 else:
                         return False
 
-@app.route('/', methods=['GET'])
-def helloThere():
-        print("Please use the following JSON code to interact with this service.\n")
-        print("Post the data to the following url::  http://<hostname>/led\n\n")
-        print("curl -H \"Content-Type: application/json\" \\ \n")
-        print("    -X POST -d '{ \\ \n")
-        print("    \"red\":\"0-255\", \\ \n")
-        print("    \"green\":\"0-255\", \\ \n")
-        print("    \"blue\":\"0-255\", \\ \n")
-        print("    \"ledFunction\":\"<function>\", \\ \n")
-        print("    \"section\":\"<section>\" \\ \n")
-        print("    }' \\ \n")
-        print("    http://localhost/led\ \n\n")
-        print("Functions available : colorwipe|theaterChase\n")
-        print("Sections available  : ring|strip|all\n")
-        return "OK\nMethod: POST\n"
+#@app.route('/', methods=['GET'])
+#def helloThere():
+#        print("Please use the following JSON code to interact with this service.\n")
+#        print("Post the data to the following url::  http://<hostname>/led\n\n")
+#        print("curl -H \"Content-Type: application/json\" \\ \n")
+#        print("    -X POST -d '{ \\ \n")
+#        print("    \"red\":\"0-255\", \\ \n")
+#        print("    \"green\":\"0-255\", \\ \n")
+#        print("    \"blue\":\"0-255\", \\ \n")
+#        print("    \"ledFunction\":\"<function>\", \\ \n")
+#        print("    \"section\":\"<section>\" \\ \n")
+#        print("    }' \\ \n")
+#        print("    http://localhost/led\ \n\n")
+#        print("Functions available : colorwipe|theaterChase\n")
+#        print("Sections available  : ring|strip|all\n")
+#        return "OK\nMethod: POST\n"
 
-@app.route('/led', methods = ['GET', 'POST'])
+@app.route('/led', methods=['GET', 'POST'])
 def ledRequest():
         global firstRun
         global worker
-        if request.method == 'GET':
-                return "OK\nMethod: GET\n"
-
-        elif request.method == 'POST':
+        if request.method == 'POST':
                 content = request.json
                 red = int(content['red'])
                 green = int(content['green'])
