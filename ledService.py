@@ -94,8 +94,8 @@ def helloThere():
 
 @app.route('/led', methods = ['GET', 'POST'])
 def ledRequest():
-	global firstRun
-	global worker
+        global firstRun
+        global worker
         if request.method == 'GET':
                 return "OK\nMethod: GET\n"
 
@@ -105,20 +105,19 @@ def ledRequest():
                 green = int(content['green'])
                 blue = int(content['blue'])
                 section = content['section']
-                if section == "all":
-
-		#dont check for workers on first time through - variable not defined
-		if (firstRun == False):	
-                	# is there a worker subprocess out there?
-	                if worker.is_alive():
-	                        # seems we have one
-	                        in_queue.put(POISON_PILL)
-	                        while worker.is_alive():
-	                                # wait for it to take POISON_PILL
-	                                time.sleep(0.1)
-	                if not worker.is_alive():
-	                        # if worker is dead
-	                        worker.join(timeout=1.0)
+                        
+                #dont check for workers on first time through - variable not defined
+                if (firstRun == False):	
+                        # is there a worker subprocess out there?
+                        if worker.is_alive():
+                                # seems we have one
+                                in_queue.put(POISON_PILL)
+                                while worker.is_alive():
+                                        # wait for it to take POISON_PILL
+                                        time.sleep(0.1)
+                        if not worker.is_alive():
+                                # if worker is dead
+                                worker.join(timeout=1.0)
 
                 if content['ledFunction'] == "colorWipe":
                         # Create NeoPixel object with appropriate configuration.
@@ -136,7 +135,7 @@ def ledRequest():
                         worker = mp.Process(target=theaterChase, args=(strip, Color(red, green, blue)))  # chase strip with color
                         worker.start()
                         # print "here in theaterchase"
-	firstRun = False
+        firstRun = False
         return "OK\nMethod: POST\n"
 
 if __name__ == "__main__":
