@@ -75,11 +75,11 @@ def poisonPill():
                 else:
                         return False
 
-def ledRequest(incomingColors):
+def ledRequest(value):
         global firstRun
         global worker
 
-        content = json.loads(incomingColors)
+        content = json.loads(value)
         
         red = int(content['red'])
         green = int(content['green'])
@@ -119,13 +119,12 @@ def ledRequest(incomingColors):
 
 
 # To see messages from networktables, you must setup logging
-
 logging.basicConfig(level=logging.DEBUG)
 
-NetworkTables.initialize(server=10.70.28.2)
+NetworkTables.initialize(server="10.70.28.2")
 
 def valueChanged(table, key, value, isNew):
-        def ledRequest(value)
+        ledRequest(value)
         #print("valueChanged: key: '%s'; value: %s; isNew: %s" % (key, value, isNew))
 
 def connectionListener(connected, info):
@@ -135,6 +134,9 @@ NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
 
 sd = NetworkTables.getTable("LED")
 sd.addEntryListener(valueChanged)
+
+# Setup the multithreading queue
+in_queue = mp.Queue()
 
 while True:
         time.sleep(1)
