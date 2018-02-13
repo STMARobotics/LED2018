@@ -75,6 +75,7 @@ def poisonPill():
                 else:
                         return False
 
+<<<<<<< HEAD
 def ledRequest(incomingColors):
         global firstRun
         global worker
@@ -115,6 +116,65 @@ def ledRequest(incomingColors):
                 worker = mp.Process(target=theaterChase, args=(strip, Color(red, green, blue)))  # chase strip with color
                 worker.start()
                 # print "here in theaterchase"
+=======
+#@app.route('/', methods=['GET'])
+#def helloThere():
+#        print("Please use the following JSON code to interact with this service.\n")
+#        print("Post the data to the following url::  http://<hostname>/led\n\n")
+#        print("curl -H \"Content-Type: application/json\" \\ \n")
+#        print("    -X POST -d '{ \\ \n")
+#        print("    \"red\":\"0-255\", \\ \n")
+#        print("    \"green\":\"0-255\", \\ \n")
+#        print("    \"blue\":\"0-255\", \\ \n")
+#        print("    \"ledFunction\":\"<function>\", \\ \n")
+#        print("    \"section\":\"<section>\" \\ \n")
+#        print("    }' \\ \n")
+#        print("    http://localhost/led\ \n\n")
+#        print("Functions available : colorwipe|theaterChase\n")
+#        print("Sections available  : ring|strip|all\n")
+#        return "OK\nMethod: POST\n"
+
+@app.route('/led', methods=['GET', 'POST'])
+def ledRequest():
+        global firstRun
+        global worker
+        if request.method == 'POST':
+                content = request.json
+                red = int(content['red'])
+                green = int(content['green'])
+                blue = int(content['blue'])
+                section = content['section']
+                        
+                #dont check for workers on first time through - variable not defined
+                if (firstRun == False):	
+                        # is there a worker subprocess out there?
+                        if worker.is_alive():
+                                # seems we have one
+                                in_queue.put(POISON_PILL)
+                                while worker.is_alive():
+                                        # wait for it to take POISON_PILL
+                                        time.sleep(0.1)
+                        if not worker.is_alive():
+                                # if worker is dead
+                                worker.join(timeout=1.0)
+
+                if content['ledFunction'] == "colorWipe":
+                        # Create NeoPixel object with appropriate configuration.
+                        strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
+                        strip.begin()
+                        # this is run as a parallel process as it will continuously upate
+                        worker = mp.Process(target=colorWipe, args=(strip, Color(red, green, blue)))  # chase strip with color
+                        worker.start()
+                        # print "here in colorwipe"
+                elif content['ledFunction'] == "theaterChase":
+                        # Create NeoPixel object with appropriate configuration.
+                        strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
+                        strip.begin()
+                        # this is run as a parallel process as it will continuously upate
+                        worker = mp.Process(target=theaterChase, args=(strip, Color(red, green, blue)))  # chase strip with color
+                        worker.start()
+                        # print "here in theaterchase"
+>>>>>>> c52e3ac26a7457727e7259628e905c729dfc8c57
         firstRun = False
 
 
