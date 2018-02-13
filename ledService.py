@@ -1,4 +1,3 @@
-from flask import Flask, render_template, request, jsonify, json, url_for
 import datetime
 import time
 import multiprocessing as mp
@@ -6,12 +5,13 @@ from neopixel import *
 import argparse
 import signal
 import sys
+import json
+from networktables import NetworkTables
+import logging
 
 POISON_PILL = "STOP"
 firstRun = True
 worker = True
-
-app = Flask(__name__)
 
 def signal_handler(signal, frame):
         colorWipe(strip, Color(0,0,0))
@@ -75,70 +75,66 @@ def poisonPill():
                 else:
                         return False
 
-@app.route('/', methods=['GET'])
-def helloThere():
-        print("Please use the following JSON code to interact with this service.\n")
-        print("Post the data to the following url::  http://<hostname>/led\n\n")
-        print("curl -H \"Content-Type: application/json\" \\ \n")
-        print("    -X POST -d '{ \\ \n")
-        print("    \"red\":\"0-255\", \\ \n")
-        print("    \"green\":\"0-255\", \\ \n")
-        print("    \"blue\":\"0-255\", \\ \n")
-        print("    \"ledFunction\":\"<function>\", \\ \n")
-        print("    \"section\":\"<section>\" \\ \n")
-        print("    }' \\ \n")
-        print("    http://localhost/led\ \n\n")
-        print("Functions available : colorwipe|theaterChase\n")
-        print("Sections available  : ring|strip|all\n")
-        return "OK\nMethod: POST\n"
-
-@app.route('/led', methods = ['GET', 'POST'])
-def ledRequest():
+def ledRequest(incomingColors):
         global firstRun
         global worker
-        if request.method == 'GET':
-                return "OK\nMethod: GET\n"
 
-        elif request.method == 'POST':
-                content = request.json
-                red = int(content['red'])
-                green = int(content['green'])
-                blue = int(content['blue'])
-                section = content['section']
-                        
-                #dont check for workers on first time through - variable not defined
-                if (firstRun == False):	
-                        # is there a worker subprocess out there?
-                        if worker.is_alive():
-                                # seems we have one
-                                in_queue.put(POISON_PILL)
-                                while worker.is_alive():
-                                        # wait for it to take POISON_PILL
-                                        time.sleep(0.1)
-                        if not worker.is_alive():
-                                # if worker is dead
-                                worker.join(timeout=1.0)
+        content = json.loads(incomingColors)
+        
+        red = int(content['red'])
+        green = int(content['green'])
+        blue = int(content['blue'])
+        section = content['section']
+                
+        #dont check for workers on first time through - variable not defined
+        if (firstRun == False):	
+                # is there a worker subprocess out there?
+                if worker.is_alive():
+                        # seems we have one
+                        in_queue.put(POISON_PILL)
+                        while worker.is_alive():
+                                # wait for it to take POISON_PILL
+                                time.sleep(0.1)
+                if not worker.is_alive():
+                        # if worker is dead
+                        worker.join(timeout=1.0)
 
-                if content['ledFunction'] == "colorWipe":
-                        # Create NeoPixel object with appropriate configuration.
-                        strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
-                        strip.begin()
-                        # this is run as a parallel process as it will continuously upate
-                        worker = mp.Process(target=colorWipe, args=(strip, Color(red, green, blue)))  # chase strip with color
-                        worker.start()
-                        # print "here in colorwipe"
-                elif content['ledFunction'] == "theaterChase":
-                        # Create NeoPixel object with appropriate configuration.
-                        strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
-                        strip.begin()
-                        # this is run as a parallel process as it will continuously upate
-                        worker = mp.Process(target=theaterChase, args=(strip, Color(red, green, blue)))  # chase strip with color
-                        worker.start()
-                        # print "here in theaterchase"
+        if content['ledFunction'] == "colorWipe":
+                # Create NeoPixel object with appropriate configuration.
+                strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
+                strip.begin()
+                # this is run as a parallel process as it will continuously upate
+                worker = mp.Process(target=colorWipe, args=(strip, Color(red, green, blue)))  # chase strip with color
+                worker.start()
+                # print "here in colorwipe"
+        elif content['ledFunction'] == "theaterChase":
+                # Create NeoPixel object with appropriate configuration.
+                strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
+                strip.begin()
+                # this is run as a parallel process as it will continuously upate
+                worker = mp.Process(target=theaterChase, args=(strip, Color(red, green, blue)))  # chase strip with color
+                worker.start()
+                # print "here in theaterchase"
         firstRun = False
-        return "OK\nMethod: POST\n"
 
-if __name__ == "__main__":
-        # Configure multiprocessing
-        in_queue = mp.Queue()
-        app.run(host='0.0.0.0', port=80, debug=True)
+
+# To see messages from networktables, you must setup logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+NetworkTables.initialize(server=10.70.28.2)
+
+def valueChanged(table, key, value, isNew):
+        def ledRequest(value)
+        #print("valueChanged: key: '%s'; value: %s; isNew: %s" % (key, value, isNew))
+
+def connectionListener(connected, info):
+        print(info, '; Connected=%s' % connected)
+
+NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
+
+sd = NetworkTables.getTable("LED")
+sd.addEntryListener(valueChanged)
+
+while True:
+        time.sleep(1)
