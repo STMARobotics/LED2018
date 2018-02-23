@@ -63,7 +63,7 @@ def happyFace(strip, color):
 				strip.setPixelColor(17, Color(0,0,0))
 				strip.setPixelColor(9, color)
 				strip.show()
-				time.sleep(2)
+				time.sleep(1.5)
 				strip.setPixelColor(5, color)
 				strip.setPixelColor(9, Color(0,0,0))
 				strip.setPixelColor(16, color)
