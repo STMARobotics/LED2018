@@ -1,9 +1,9 @@
 import json
 import urllib2
 data = {
-    'red':   '100',
-    'green': '5',
-    'blue':  '5',
+    'red':   '41',
+    'green': '11',
+    'blue':  '117',
     'ledFunction': 'happyFace',
     'section': 'all'}
 req = urllib2.Request('http://localhost/led')

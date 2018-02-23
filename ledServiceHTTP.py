@@ -56,7 +56,7 @@ def happyFace(strip, color):
 			if poisonPill():
 				return None
 			# Lets do some random winks
-			winkCheck = random.randrange(1,1000000)
+			winkCheck = random.randrange(1,150)
 			if (winkCheck == 1):
 				strip.setPixelColor(5, Color(0,0,0))
 				strip.setPixelColor(16, Color(0,0,0))
@@ -69,7 +69,7 @@ def happyFace(strip, color):
 				strip.setPixelColor(16, color)
 				strip.setPixelColor(17, color)
 				strip.show()	
-		time.sleep(.5)
+			time.sleep(.1)
 	return None
 
 def colorWipe(strip, color):
