@@ -4,7 +4,7 @@ data = {
     'red':   '41',
     'green': '11',
     'blue':  '117',
-    'ledFunction': 'happyFace',
+    'ledFunction': 'winkyFace',
     'section': 'all'}
 req = urllib2.Request('http://localhost/led')
 req.add_header('Content-Type', 'application/json')

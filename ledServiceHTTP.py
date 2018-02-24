@@ -37,11 +37,11 @@ LED_STRIP      = ws.WS2811_STRIP_GRB   # Strip type and colour ordering
 LED_Ring_Low   = 0
 LED_Ring_High  = 23
 LED_Strip_Low  = 24
-LED_Strip_High = 37     # This should match the LED_COUNT variable
+LED_Strip_High = LED_COUNT
 
 # Define functions which animate LEDs in various ways.
 # attempting to allow multiprocess via this post : https://stackoverflow.com/questions/29571671/basic-multiprocessing-with-while-loop
-def happyFace(strip, color):
+def winkyFace(strip, color):
 	# Change color of the pixel strip
 	while True:
 		# Setup the initial smilie face
@@ -72,12 +72,12 @@ def happyFace(strip, color):
 			time.sleep(.1)
 	return None
 
-def colorWipe(strip, color):
+def colorWipe(strip, color, section):
 	# Change color of the pixel strip
         # Check for POISON_PILL and exit if there is one
         if poisonPill():
                 return None
-        for i in range(strip.numPixels()):
+        for i in range(pixelLow(), pixelHigh()):
                 strip.setPixelColor(i, color)
         strip.show()
         return None
@@ -96,6 +96,23 @@ def theaterChase(strip, color, wait_ms=50):
                         for i in range(0, strip.numPixels(), 3):
                                 strip.setPixelColor(i+q, 0)
         return None 
+def pixelLow(section):
+	if (section == 'ring'):
+		start = LED_Ring_Low
+	elif (section == 'strip'):
+		start = LED_Strip_Low
+	else:
+		start = 0
+	return start
+
+def pixelHigh(section):
+	if (section == 'ring'):
+		end = LED_Ring_High
+	elif (section == 'strip'):
+		end = LED_Strip_High
+	else:
+		end = LED_COUNT
+	return end
 
 def poisonPill():
         # Check queue for POISON_PILL
@@ -117,8 +134,9 @@ def ledRequest():
                 green = int(content['green'])
                 blue = int(content['blue'])
                 section = content['section']
+		# for section we expect "ring | strip | all"
                         
-                #dont check for workers on first time through - variable not defined
+                # Dont check for workers on first time through - variable not defined
                 if (firstRun == False):	
                         # is there a worker subprocess out there?
                         if worker.is_alive():
@@ -134,14 +152,14 @@ def ledRequest():
                 # Create NeoPixel object with appropriate configuration.
                 strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
                 strip.begin()
-                if content['ledFunction'] == "happyFace":
+                if content['ledFunction'] == "winkyFace":
                         # this is run as a parallel process as it will continuously upate
                         worker = mp.Process(target=happyFace, args=(strip, Color(red, green, blue)))  # chase strip with color
                         worker.start()
                         # print "here in colorwipe"
                 if content['ledFunction'] == "colorWipe":
                         # this is run as a parallel process as it will continuously upate
-                        worker = mp.Process(target=colorWipe, args=(strip, Color(red, green, blue)))  # chase strip with color
+                        worker = mp.Process(target=colorWipe, args=(strip, Color(red, green, blue),section))  # chase strip with color
                         worker.start()
                         # print "here in colorwipe"
                 elif content['ledFunction'] == "theaterChase":

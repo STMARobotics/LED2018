@@ -42,7 +42,7 @@ LED_Strip_High = 37     # This should match the LED_COUNT variable
 
 # Define functions which animate LEDs in various ways.
 # attempting to allow multiprocess via this post : https://stackoverflow.com/questions/29571671/basic-multiprocessing-with-while-loop
-def happyFace(strip, color):
+def winkyFace(strip, color):
         # Change color of the pixel strip
         while True:
                 # Setup the initial smilie face
@@ -140,7 +140,7 @@ def ledRequest(value):
                 if content['ledFunction'] == "shutdown":
 			# shut it down, kids.
 			os.system("shutdown /s /t 1")
-                elif content['ledFunction'] == "happyFace":
+                elif content['ledFunction'] == "winkyFace":
                         # this is run as a parallel process as it will continuously upate
                         worker = mp.Process(target=happyFace, args=(strip, Color(red, green, blue)))  # chase strip with color
                         worker.start()
