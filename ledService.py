@@ -6,6 +6,7 @@ import argparse
 import signal
 import sys
 import json
+import os
 from networktables import NetworkTables
 import logging
 
@@ -38,8 +39,41 @@ LED_Ring_High  = 23
 LED_Strip_Low  = 24
 LED_Strip_High = 37     # This should match the LED_COUNT variable
 
+
 # Define functions which animate LEDs in various ways.
 # attempting to allow multiprocess via this post : https://stackoverflow.com/questions/29571671/basic-multiprocessing-with-while-loop
+def happyFace(strip, color):
+        # Change color of the pixel strip
+        while True:
+                # Setup the initial smilie face
+                strip.setPixelColor(5, color)
+                strip.setPixelColor(22, color)
+                for i in range(10,17):
+                        strip.setPixelColor(i, color)
+                strip.setPixelColor(5, color)
+                strip.show()
+                while True:
+                        # Check for POISON_PILL and exit if there is one
+                        if poisonPill():
+                                return None
+                        # Lets do some random winks
+                        winkCheck = random.randrange(1,150)
+                        if (winkCheck == 1):
+                                strip.setPixelColor(5, Color(0,0,0))
+                                strip.setPixelColor(16, Color(0,0,0))
+                                strip.setPixelColor(17, Color(0,0,0))
+                                strip.setPixelColor(9, color)
+                                strip.show()
+				# How long the wink lasts
+                                time.sleep(1)
+                                strip.setPixelColor(5, color)
+                                strip.setPixelColor(9, Color(0,0,0))
+                                strip.setPixelColor(16, color)
+                                strip.setPixelColor(17, color)
+                                strip.show()    
+                        time.sleep(.1)
+        return None
+
 def colorWipe(strip, color):
 	# Change color of the pixel strip
         # Check for POISON_PILL and exit if there is one
@@ -99,24 +133,30 @@ def ledRequest(value):
                         # if worker is dead
                         worker.join(timeout=1.0)
 
-        if content['ledFunction'] == "colorWipe":
                 # Create NeoPixel object with appropriate configuration.
                 strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
                 strip.begin()
-                # this is run as a parallel process as it will continuously upate
-                worker = mp.Process(target=colorWipe, args=(strip, Color(red, green, blue)))  # chase strip with color
-                worker.start()
-                # print "here in colorwipe"
-        elif content['ledFunction'] == "theaterChase":
-                # Create NeoPixel object with appropriate configuration.
-                strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
-                strip.begin()
-                # this is run as a parallel process as it will continuously upate
-                worker = mp.Process(target=theaterChase, args=(strip, Color(red, green, blue)))  # chase strip with color
-                worker.start()
-                # print "here in theaterchase"
-        firstRun = False
 
+                if content['ledFunction'] == "shutdown":
+			# shut it down, kids.
+			os.system("shutdown /s /t 1")
+                elif content['ledFunction'] == "happyFace":
+                        # this is run as a parallel process as it will continuously upate
+                        worker = mp.Process(target=happyFace, args=(strip, Color(red, green, blue)))  # chase strip with color
+                        worker.start()
+                        # print "here in colorwipe"
+                elif content['ledFunction'] == "colorWipe":
+                        # this is run as a parallel process as it will continuously upate
+                        worker = mp.Process(target=colorWipe, args=(strip, Color(red, green, blue)))  # chase strip with color
+                        worker.start()
+                        # print "here in colorwipe"
+                elif content['ledFunction'] == "theaterChase":
+                        # this is run as a parallel process as it will continuously upate
+                        worker = mp.Process(target=theaterChase, args=(strip, Color(red, green, blue)))  # chase strip with color
+                        worker.start()
+                        # print "here in theaterchase"
+
+        firstRun = False
 
 # To see messages from networktables, you must setup logging
 logging.basicConfig(level=logging.DEBUG)
