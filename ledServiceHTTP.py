@@ -154,7 +154,7 @@ def ledRequest():
                 strip.begin()
                 if content['ledFunction'] == "winkyFace":
                         # this is run as a parallel process as it will continuously upate
-                        worker = mp.Process(target=happyFace, args=(strip, Color(red, green, blue)))  # chase strip with color
+                        worker = mp.Process(target=winkyFace, args=(strip, Color(red, green, blue)))  # chase strip with color
                         worker.start()
                         # print "here in colorwipe"
                 if content['ledFunction'] == "colorWipe":
